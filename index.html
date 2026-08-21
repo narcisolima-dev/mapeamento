@@ -194,8 +194,8 @@ body {
 .nuvem-linhas .v { font-size: 19px; font-weight: 800; }
 .nuvem-linhas .l { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; opacity: .9; margin-top: 2px; }
 @media (max-width: 680px) { .nuvem-linhas { grid-template-columns: 1fr 1fr; } }
-.mini-sel { margin-top: 5px; font-size: 12px !important; padding: 7px 9px !important; color: var(--gray-3) !important; }
-.mini-sel:not([value=""]) { color: var(--gray-1); }
+.mini-sel { margin-top: 5px; font-size: 12px !important; padding: 7px 9px !important; }
+.mini-sel::placeholder { color: var(--gray-4); font-style: italic; }
 
 .obj-box {
   background: var(--purple-pale); border-radius: 10px; border-left: 3px solid var(--purple);
@@ -807,17 +807,18 @@ body[data-print-mode="capa"] #printLayer .pl-capa { page-break-after: auto; }
             <label>Disciplina *</label>
             <input id="profDisciplina" placeholder="Ex.: Matemática" list="listaDisciplinas">
             <datalist id="listaDisciplinas"></datalist>
+            <datalist id="listaCursos"></datalist>
           </div>
         </div>
         <div class="field-row cols-3">
-          <div class="field"><label>Turma 1</label><input id="profTurma1" placeholder="Ex.: 7º A"><select id="profCurso1" class="mini-sel" title="Curso desta turma"><option value="">Curso: usar o do professor</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico — Administração</option><option>Ensino Médio + Técnico</option></select></div>
-          <div class="field"><label>Turma 2</label><input id="profTurma2" placeholder="Ex.: 7º B"><select id="profCurso2" class="mini-sel" title="Curso desta turma"><option value="">Curso: usar o do professor</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico — Administração</option><option>Ensino Médio + Técnico</option></select></div>
-          <div class="field"><label>Turma 3</label><input id="profTurma3" placeholder="Ex.: 8º A"><select id="profCurso3" class="mini-sel" title="Curso desta turma"><option value="">Curso: usar o do professor</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico — Administração</option><option>Ensino Médio + Técnico</option></select></div>
+          <div class="field"><label>Turma 1</label><input id="profTurma1" placeholder="Ex.: 7º A"><input id="profCurso1" class="mini-sel" list="listaCursos" placeholder="Curso desta turma" title="Digite o curso desta turma"></div>
+          <div class="field"><label>Turma 2</label><input id="profTurma2" placeholder="Ex.: 7º B"><input id="profCurso2" class="mini-sel" list="listaCursos" placeholder="Curso desta turma" title="Digite o curso desta turma"></div>
+          <div class="field"><label>Turma 3</label><input id="profTurma3" placeholder="Ex.: 8º A"><input id="profCurso3" class="mini-sel" list="listaCursos" placeholder="Curso desta turma" title="Digite o curso desta turma"></div>
         </div>
         <div class="field-row cols-3">
-          <div class="field"><label>Turma 4</label><input id="profTurma4" placeholder="Ex.: 8º B"><select id="profCurso4" class="mini-sel" title="Curso desta turma"><option value="">Curso: usar o do professor</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico — Administração</option><option>Ensino Médio + Técnico</option></select></div>
-          <div class="field"><label>Turma 5</label><input id="profTurma5" placeholder="Ex.: 9º A"><select id="profCurso5" class="mini-sel" title="Curso desta turma"><option value="">Curso: usar o do professor</option><option>Ensino Fundamental II</option><option>Ensino Médio</option><option>Ensino Técnico — Administração</option><option>Ensino Médio + Técnico</option></select></div>
-          <div class="field"><label>Etapa / Curso padrão do professor</label>
+          <div class="field"><label>Turma 4</label><input id="profTurma4" placeholder="Ex.: 8º B"><input id="profCurso4" class="mini-sel" list="listaCursos" placeholder="Curso desta turma" title="Digite o curso desta turma"></div>
+          <div class="field"><label>Turma 5</label><input id="profTurma5" placeholder="Ex.: 9º A"><input id="profCurso5" class="mini-sel" list="listaCursos" placeholder="Curso desta turma" title="Digite o curso desta turma"></div>
+          <div class="field"><label>Etapa / Curso do professor</label>
             <select id="profEtapa">
               <option value="">— não informar —</option>
               <option>Ensino Fundamental II</option>
@@ -828,9 +829,10 @@ body[data-print-mode="capa"] #printLayer .pl-capa { page-break-after: auto; }
           </div>
         </div>
         <div class="hint" style="margin-top:2px;">
-          O curso de cada turma alimenta a comparação por curso no dashboard. Deixe em “usar o do professor”
-          quando todas as turmas forem do mesmo segmento; altere apenas nas turmas de segmento diferente.
-          O ano/série é identificado automaticamente pelo nome da turma.
+          Digite o curso de cada turma no campo abaixo do nome dela — é esse dado que alimenta a comparação
+          por curso no dashboard. O campo do professor é apenas informativo e não preenche as turmas.
+          Ao digitar, o sistema sugere os cursos já usados: aproveite a sugestão para manter a grafia idêntica.
+          O ano/série continua sendo identificado automaticamente pelo nome da turma.
         </div>
         <div class="save-wrap">
           <button class="btn btn-ghost" onclick="limparFormProf()">Limpar formulário</button>
@@ -1903,7 +1905,10 @@ function anoDaTurma(nome){
   return m ? m[1] + 'º ano' : 'Não identificado';
 }
 function cursoDaTurma(prof, turma){
-  return (turma && turma.curso) || (prof && prof.etapa) || 'Não informado';
+  /* O curso é uma informação própria da turma — não herda mais a etapa do professor,
+     porque um mesmo docente pode lecionar em segmentos diferentes. */
+  const c = turma && turma.curso ? String(turma.curso).trim() : '';
+  return c || 'Não informado';
 }
 function optsAnos(){
   return [...new Set(todasTurmas().map(t => t.ano))]
@@ -2013,7 +2018,7 @@ function salvarProfessor(){
   if (!disc) { toast('⚠️ Informe a disciplina.'); document.getElementById('profDisciplina').focus(); return; }
 
   const slots = [1,2,3,4,5].map(i => document.getElementById('profTurma'+i).value.trim());
-  const cursosSlot = [1,2,3,4,5].map(i => document.getElementById('profCurso'+i).value);
+  const cursosSlot = [1,2,3,4,5].map(i => document.getElementById('profCurso'+i).value.trim());
   const nomesTurmas = slots.filter(v => v !== '');
   const dup = nomesTurmas.filter((v,i) => nomesTurmas.map(x=>x.toLowerCase()).indexOf(v.toLowerCase()) !== i);
   if (dup.length) { toast('⚠️ Turma repetida no cadastro: ' + dup[0]); return; }
@@ -2030,10 +2035,10 @@ function salvarProfessor(){
     const antigas = p.turmas || [];
     const usadas = new Set();
     const exclusaoAutorizada = new Set();
-    const casadas = slots.map(nm => {
+    const casadas = slots.map((nm, idx) => {
       if (!nm) return null;
       const ja = antigas.find(t => !usadas.has(t.id) && t.nome.toLowerCase() === nm.toLowerCase());
-      if (ja) { usadas.add(ja.id); return { id: ja.id, nome: nm, curso: cursosSlot[slots.indexOf(nm)] || '' }; }
+      if (ja) { usadas.add(ja.id); return { id: ja.id, nome: nm, curso: cursosSlot[idx] || '' }; }
       return undefined;
     });
     for (let i = 0; i < 5; i++){
@@ -2550,6 +2555,14 @@ function refreshSelects(){
   fillSelect('fcCurso', optsCursos(), '— selecione —');
   fillSelect('feProf', optsProfs(), 'Todos');
   fillSelect('feTurma', optsTurmas(document.getElementById('feProf')?.value || ''), '— selecione —');
+  const dlc = document.getElementById('listaCursos');
+  if (dlc){
+    const usados = [...new Set(PROFS.flatMap(p => (p.turmas||[]).map(t => (t.curso||'').trim())).filter(Boolean))]
+      .sort((a,b) => a.localeCompare(b,'pt-BR'));
+    const sugestoes = usados.length ? usados
+      : ['Ensino Fundamental II','Ensino Médio','Ensino Técnico — Administração','Ensino Médio + Técnico'];
+    dlc.innerHTML = sugestoes.map(c => `<option value="${escHtml(c)}">`).join('');
+  }
   const dl = document.getElementById('listaDisciplinas');
   if (dl) dl.innerHTML = optsDisciplinas().map(d => `<option value="${escHtml(d.v)}">`).join('');
 }
